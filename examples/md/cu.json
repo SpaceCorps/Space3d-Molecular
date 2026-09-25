@@ -1,0 +1,38 @@
+{
+  "title": "Copper with the built-in Johnson-style analytic EAM: cell relaxation, NVT and NPT at 300 K",
+  "units": "metal",
+  "seed": 29,
+  "system": {
+    "types": [{ "name": "Cu", "mass": 63.546 }],
+    "structure": { "lattice": { "kind": "fcc", "a": 3.6, "cells": [10, 10, 10], "types": ["Cu"] } }
+  },
+  "potentials": [{ "type": "eam", "builtin": "johnson_cu" }],
+  "neighbor": { "skin": 0.5 },
+  "stages": [
+    {
+      "name": "relax",
+      "minimize": { "ftol": 1e-6, "box_relax": { "pressure": 0.0, "ptol": 1.0 } }
+    },
+    {
+      "name": "nvt_300K",
+      "steps": 5000,
+      "velocities": { "temperature": 600.0 },
+      "integrator": { "dt": 2.0, "thermostat": { "type": "nose_hoover", "temperature": 300.0, "damping": 100.0 } }
+    },
+    {
+      "name": "npt_300K",
+      "steps": 5000,
+      "record": true,
+      "integrator": {
+        "dt": 2.0,
+        "thermostat": { "type": "nose_hoover", "temperature": 300.0, "damping": 100.0 },
+        "barostat": { "type": "berendsen", "pressure": 0.0, "tau": 1000.0, "compressibility": 7.3e-7 }
+      }
+    }
+  ],
+  "output": {
+    "thermo_every": 50,
+    "print_every": 1000,
+    "rdf": { "every": 100, "r_max": 8.0, "bins": 200 }
+  }
+}

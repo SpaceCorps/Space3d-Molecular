@@ -1,0 +1,44 @@
+{
+  "title": "Liquid argon at 94.4 K (Rahman 1964 state point)",
+  "units": "metal",
+  "seed": 20240924,
+  "system": {
+    "types": [{ "name": "Ar", "mass": 39.948 }],
+    "structure": { "lattice": { "kind": "fcc", "a": 5.781, "cells": [8, 8, 8], "types": ["Ar"] } },
+    "velocities": { "temperature": 94.4 }
+  },
+  "potentials": [
+    {
+      "type": "lj",
+      "cutoff": 8.5,
+      "shift": "energy",
+      "pairs": [{ "types": ["Ar", "Ar"], "epsilon": 0.010323, "sigma": 3.405 }]
+    }
+  ],
+  "neighbor": { "skin": 1.0 },
+  "stages": [
+    {
+      "name": "melt",
+      "steps": 2000,
+      "integrator": { "dt": 5.0, "thermostat": { "type": "langevin", "temperature": 200.0, "damping": 500.0 } }
+    },
+    {
+      "name": "equilibrate",
+      "steps": 4000,
+      "integrator": { "dt": 5.0, "thermostat": { "type": "langevin", "temperature": 94.4, "damping": 500.0 } }
+    },
+    {
+      "name": "production",
+      "steps": 10000,
+      "integrator": { "dt": 5.0 }
+    }
+  ],
+  "output": {
+    "thermo_every": 50,
+    "print_every": 1000,
+    "trajectory": { "every": 1000, "format": "extxyz" },
+    "rdf": { "every": 100, "r_max": 15.0, "bins": 300 },
+    "msd": { "every": 10, "max_lag": 400, "origin_interval": 20 },
+    "vacf": { "every": 2, "max_lag": 400, "origin_interval": 10 }
+  }
+}

@@ -1,0 +1,68 @@
+{
+  "title": "NaCl crystal heated through melting (Tosi-Fumi repulsion + dispersion as Buckingham, DSF Coulomb, NPT)",
+  "units": "metal",
+  "seed": 11,
+  "system": {
+    "types": [
+      { "name": "Na", "mass": 22.98977, "charge": 1.0 },
+      { "name": "Cl", "mass": 35.453, "charge": -1.0 }
+    ],
+    "structure": { "lattice": { "kind": "rocksalt", "a": 5.64, "cells": [6, 6, 6], "types": ["Na", "Cl"] } }
+  },
+  "potentials": [
+    {
+      "type": "buckingham",
+      "cutoff": 10.0,
+      "shift": "energy",
+      "pairs": [
+        { "types": ["Na", "Na"], "a": 423.2, "rho": 0.317, "c": 1.0486 },
+        { "types": ["Na", "Cl"], "a": 1254.9, "rho": 0.317, "c": 6.990 },
+        { "types": ["Cl", "Cl"], "a": 3485.0, "rho": 0.317, "c": 72.40 }
+      ]
+    },
+    { "type": "coulomb_dsf", "alpha": 0.2, "cutoff": 10.0 }
+  ],
+  "neighbor": { "skin": 1.0 },
+  "stages": [
+    {
+      "name": "relax",
+      "minimize": { "ftol": 1e-4, "box_relax": { "pressure": 0.0, "ptol": 10.0 } }
+    },
+    {
+      "name": "solid_300K",
+      "steps": 5000,
+      "velocities": { "temperature": 300.0 },
+      "integrator": {
+        "dt": 2.0,
+        "thermostat": { "type": "langevin", "temperature": 300.0, "damping": 200.0 },
+        "barostat": { "type": "berendsen", "pressure": 1.0, "tau": 1000.0, "compressibility": 4.2e-6 }
+      }
+    },
+    {
+      "name": "hot_solid_1000K",
+      "steps": 5000,
+      "integrator": {
+        "dt": 2.0,
+        "thermostat": { "type": "langevin", "temperature": 1000.0, "damping": 200.0 },
+        "barostat": { "type": "berendsen", "pressure": 1.0, "tau": 1000.0, "compressibility": 4.2e-6 }
+      }
+    },
+    {
+      "name": "melt_1600K",
+      "steps": 10000,
+      "record": true,
+      "integrator": {
+        "dt": 2.0,
+        "thermostat": { "type": "langevin", "temperature": 1600.0, "damping": 200.0 },
+        "barostat": { "type": "berendsen", "pressure": 1.0, "tau": 1000.0, "compressibility": 4.2e-6 }
+      }
+    }
+  ],
+  "output": {
+    "thermo_every": 50,
+    "print_every": 1000,
+    "trajectory": { "every": 1000, "format": "extxyz" },
+    "rdf": { "every": 200, "r_max": 12.0, "bins": 240 },
+    "msd": { "every": 20, "max_lag": 250, "origin_interval": 25 }
+  }
+}

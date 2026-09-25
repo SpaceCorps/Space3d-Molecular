@@ -1,0 +1,274 @@
+openapi: 3.1.0
+info:
+  title: spaceemit electron emission API
+  version: 0.1.0
+  description: >
+    Thermal-field electron emission from metal and semiconductor surfaces: current density,
+    Nottingham heat, energy spectra, barrier, transmission and I–V fitting. Energies in eV with
+    the vacuum level at the surface = 0 and the Fermi level at −W; spectrum and transmission
+    energies are relative to E_F. See docs/emission-api.md.
+servers:
+  - url: http://localhost:8741
+paths:
+  /health:
+    get:
+      summary: Liveness
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema: { type: object, properties: { status: { type: string, const: ok } } }
+  /v1/info:
+    get:
+      summary: Version, defaults, units, endpoints, models and citations
+      responses:
+        "200": { description: Service description, content: { application/json: { schema: { type: object } } } }
+  /v1/emission:
+    post:
+      summary: Batch current density and Nottingham heat
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/EmissionRequest" }
+      responses:
+        "200":
+          description: Columnar results; failed points are null and listed in errors
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/EmissionResponse" }
+        default: { $ref: "#/components/responses/Error" }
+  /v1/spectra:
+    post:
+      summary: Total, normal and parallel energy distributions of one point
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "#/components/schemas/Point"
+                - type: object
+                  properties:
+                    points: { type: integer, minimum: 8, default: 256, description: Samples per distribution }
+      responses:
+        "200":
+          description: Spectra
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  currentDensity: { type: number, description: A/nm^2 }
+                  nottinghamHeat: { type: number, description: W/nm^2 }
+                  totalEnergyDistribution: { $ref: "#/components/schemas/Distribution" }
+                  normalEnergyDistribution: { $ref: "#/components/schemas/Distribution" }
+                  parallelEnergyDistribution: { $ref: "#/components/schemas/Distribution" }
+                  sumRules:
+                    type: array
+                    items: { type: number }
+                    description: Integral of each distribution divided by J (total, normal, parallel)
+        default: { $ref: "#/components/responses/Error" }
+  /v1/barrier:
+    post:
+      summary: Barrier potential profile and top
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [field]
+              properties:
+                field: { type: number, description: V/nm }
+                radius: { type: [number, "null"], description: nm; null = planar }
+                gamma: { type: number, default: 10 }
+                distance: { type: array, items: { type: number }, description: nm }
+                points: { type: integer, description: Log-spaced samples from 0.05 nm to maxDistance }
+                maxDistance: { type: number, description: nm }
+      responses:
+        "200":
+          description: Barrier
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  distance: { type: array, items: { type: number } }
+                  potential: { type: array, items: { type: number }, description: eV relative to the vacuum level }
+                  topDistance: { type: number, description: nm }
+                  topPotential: { type: number, description: eV relative to the vacuum level }
+                  topHbarOmega: { type: number, description: eV }
+        default: { $ref: "#/components/responses/Error" }
+  /v1/transmission:
+    post:
+      summary: Transmission probability vs normal energy for one point
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: "#/components/schemas/Point"
+                - type: object
+                  properties:
+                    energy:
+                      oneOf: [{ type: number }, { type: array, items: { type: number } }]
+                      description: Normal energy relative to E_F (eV)
+                    points: { type: integer, default: 101, description: "Evenly spaced energies from max(E_F - 3 eV, band bottom) to barrier top + 1 eV" }
+                    parallelEnergy: { type: number, default: 0, description: eV }
+      responses:
+        "200":
+          description: Transmission
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  energy: { type: array, items: { type: number } }
+                  transmission: { type: array, items: { type: number } }
+                  logTransmission: { type: array, items: { type: number } }
+                  gamow: { type: array, items: { type: number } }
+                  kemble: { type: array, items: { type: number } }
+        default: { $ref: "#/components/responses/Error" }
+  /v1/iv-fit:
+    post:
+      summary: Fit measured I–V data
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [voltage, current, workFunction]
+              properties:
+                voltage: { type: array, items: { type: number }, description: V }
+                current: { type: array, items: { type: number }, description: A }
+                workFunction: { type: number }
+                radius: { type: [number, "null"] }
+                gamma: { type: number }
+                temperature: { type: number }
+                effectiveMass: { type: number }
+                bandDepth: { type: number }
+                fit:
+                  type: array
+                  items: { type: string, enum: [radius, gamma, workFunction, temperature] }
+                  description: Extra parameters to fit (beta and area are always fitted)
+                initialBeta: { type: number, description: "Starting beta (1/nm); default from a Fowler-Nordheim plot" }
+                maxIterations: { type: integer, default: 60 }
+                bounds:
+                  type: object
+                  description: Any subset; missing entries keep their defaults
+                  additionalProperties: false
+                  properties:
+                    beta: { $ref: "#/components/schemas/Range" }
+                    radius: { $ref: "#/components/schemas/Range" }
+                    gamma: { $ref: "#/components/schemas/Range" }
+                    workFunction: { $ref: "#/components/schemas/Range" }
+                    temperature: { $ref: "#/components/schemas/Range" }
+                options: { $ref: "#/components/schemas/Options" }
+      responses:
+        "200":
+          description: Fit result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  converged: { type: boolean }
+                  iterations: { type: integer }
+                  rmsLogResidual: { type: number }
+                  beta: { $ref: "#/components/schemas/Estimate" }
+                  area: { $ref: "#/components/schemas/Estimate" }
+                  radius: { $ref: "#/components/schemas/Estimate" }
+                  gamma: { $ref: "#/components/schemas/Estimate" }
+                  workFunction: { $ref: "#/components/schemas/Estimate" }
+                  temperature: { $ref: "#/components/schemas/Estimate" }
+                  voltage: { type: array, items: { type: number } }
+                  current: { type: array, items: { type: number } }
+                  field: { type: array, items: { type: number } }
+                  fittedCurrent: { type: array, items: { type: number } }
+        default: { $ref: "#/components/responses/Error" }
+components:
+  schemas:
+    Range:
+      type: array
+      items: { type: number }
+      minItems: 2
+      maxItems: 2
+      description: "[lower, upper]"
+    NumOrArray:
+      oneOf: [{ type: number }, { type: array, items: { type: number } }]
+    Options:
+      type: object
+      properties:
+        mode: { type: string, enum: [exact, wkb], default: exact }
+        tolerance: { type: number, default: 1.0e-6 }
+    Point:
+      type: object
+      required: [field, workFunction]
+      properties:
+        field: { type: number, description: Local field (V/nm) }
+        radius: { type: [number, "null"], description: Radius of curvature (nm); null = planar }
+        gamma: { type: number, default: 10 }
+        workFunction: { type: number, description: eV }
+        temperature: { type: number, default: 300, description: K }
+        effectiveMass: { type: number, default: 1, description: m_e }
+        bandDepth: { type: number, default: 10, description: eV }
+        options: { $ref: "#/components/schemas/Options" }
+    EmissionRequest:
+      type: object
+      required: [field, workFunction]
+      properties:
+        field: { $ref: "#/components/schemas/NumOrArray" }
+        radius: { oneOf: [{ type: number }, { type: "null" }, { type: array, items: { type: number } }], description: "nm; omit or null for planar" }
+        gamma: { $ref: "#/components/schemas/NumOrArray" }
+        workFunction: { $ref: "#/components/schemas/NumOrArray" }
+        temperature: { $ref: "#/components/schemas/NumOrArray" }
+        effectiveMass: { $ref: "#/components/schemas/NumOrArray" }
+        bandDepth: { $ref: "#/components/schemas/NumOrArray" }
+        options: { $ref: "#/components/schemas/Options" }
+    EmissionResponse:
+      type: object
+      properties:
+        count: { type: integer }
+        currentDensity: { type: array, items: { type: [number, "null"] }, description: A/nm^2 }
+        nottinghamHeat: { type: array, items: { type: [number, "null"] }, description: W/nm^2; negative = emitter heated }
+        meanEnergy: { type: array, items: { type: [number, "null"] }, description: eV relative to E_F }
+        barrierTop: { type: array, items: { type: [number, "null"] }, description: eV relative to E_F }
+        regime: { type: array, items: { type: [string, "null"], enum: [field, intermediate, thermionic, null] } }
+        errors: { type: array, items: { $ref: "#/components/schemas/PointError" } }
+        elapsedMs: { type: number }
+    PointError:
+      type: object
+      properties:
+        index: { type: integer }
+        code: { type: string }
+        message: { type: string }
+    Distribution:
+      type: object
+      properties:
+        energy: { type: array, items: { type: number }, description: eV (relative to E_F; parallel energy >= 0) }
+        value: { type: array, items: { type: number }, description: A/nm^2/eV }
+    Estimate:
+      type: object
+      properties:
+        value: { type: number }
+        sigma: { type: number, description: One standard deviation; 0 if held fixed }
+    Error:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+              enum: [invalid_json, invalid_request, invalid_parameter, no_barrier, length_mismatch, fit_failed, payload_too_large, batch_too_large, not_found]
+            message: { type: string }
+  responses:
+    Error:
+      description: Request-level error
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }

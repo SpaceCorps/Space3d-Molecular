@@ -1,0 +1,38 @@
+{
+  "title": "Lennard-Jones fluid at T* = 2.0, rho* = 0.8 (compare Johnson, Zollweg & Gubbins 1993 EOS: P* = 5.31, U*/N = -4.76)",
+  "units": "lj",
+  "seed": 7,
+  "system": {
+    "types": [{ "name": "LJ", "mass": 1.0 }],
+    "structure": { "lattice": { "kind": "fcc", "a": 1.7099759, "cells": [6, 6, 6], "types": ["LJ"] } },
+    "velocities": { "temperature": 2.0 }
+  },
+  "potentials": [
+    {
+      "type": "lj",
+      "cutoff": 4.0,
+      "shift": "none",
+      "tail": true,
+      "pairs": [{ "types": ["LJ", "LJ"], "epsilon": 1.0, "sigma": 1.0 }]
+    }
+  ],
+  "neighbor": { "skin": 0.3 },
+  "stages": [
+    {
+      "name": "equilibrate",
+      "steps": 4000,
+      "integrator": { "dt": 0.005, "thermostat": { "type": "langevin", "temperature": 2.0, "damping": 0.5 } }
+    },
+    {
+      "name": "production",
+      "steps": 20000,
+      "integrator": { "dt": 0.005, "thermostat": { "type": "nose_hoover", "temperature": 2.0, "damping": 0.5 } }
+    }
+  ],
+  "output": {
+    "thermo_every": 10,
+    "print_every": 5000,
+    "rdf": { "every": 100, "r_max": 4.0, "bins": 200 },
+    "msd": { "every": 10, "max_lag": 300, "origin_interval": 10 }
+  }
+}

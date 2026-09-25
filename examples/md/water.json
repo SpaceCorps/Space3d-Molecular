@@ -1,0 +1,47 @@
+{
+  "title": "Flexible SPC/Fw water (Wu, Tepper & Voth 2006) with DSF electrostatics, 300 K",
+  "units": "metal",
+  "seed": 18,
+  "system": {
+    "types": [
+      { "name": "O", "mass": 15.9994, "charge": -0.82 },
+      { "name": "H", "mass": 1.008, "charge": 0.41 }
+    ],
+    "structure": { "water": { "molecules": 512, "density": 1.0, "oxygen": "O", "hydrogen": "H" } }
+  },
+  "potentials": [
+    {
+      "type": "lj",
+      "cutoff": 9.0,
+      "shift": "force",
+      "pairs": [
+        { "types": ["O", "O"], "epsilon": 0.0067388, "sigma": 3.165492 }
+      ]
+    },
+    { "type": "coulomb_dsf", "alpha": 0.2, "cutoff": 10.0, "exclude_intramolecular": true },
+    { "type": "bonds", "kinds": [{ "k": 45.9296, "r0": 1.012 }] },
+    { "type": "angles", "kinds": [{ "k": 3.29133, "theta0_deg": 113.24 }] }
+  ],
+  "neighbor": { "skin": 1.0 },
+  "stages": [
+    { "name": "relax", "minimize": { "ftol": 0.05, "max_steps": 2000 } },
+    {
+      "name": "equilibrate",
+      "steps": 4000,
+      "velocities": { "temperature": 300.0 },
+      "integrator": { "dt": 0.5, "thermostat": { "type": "langevin", "temperature": 300.0, "damping": 100.0 } }
+    },
+    {
+      "name": "production",
+      "steps": 6000,
+      "integrator": { "dt": 0.5, "thermostat": { "type": "nose_hoover", "temperature": 300.0, "damping": 50.0 } }
+    }
+  ],
+  "output": {
+    "thermo_every": 20,
+    "print_every": 1000,
+    "trajectory": { "every": 500, "format": "extxyz" },
+    "rdf": { "every": 50, "r_max": 8.0, "bins": 160 },
+    "msd": { "every": 10, "max_lag": 300, "origin_interval": 20 }
+  }
+}
