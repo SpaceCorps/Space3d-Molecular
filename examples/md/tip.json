@@ -1,0 +1,39 @@
+{
+  "title": "Cu [001] nanotip under a strong field, heated by its own field emission",
+  "seed": 7,
+  "potential": { "builtin": "johnson_cu" },
+  "geometry": {
+    "crystal": "fcc",
+    "lattice_constant": 3.615,
+    "orientation": "001",
+    "box_xy": [90.0, 90.0],
+    "substrate_thickness": 25.0,
+    "tip_radius": 20.0,
+    "tip_height": 100.0,
+    "fixed_thickness": 3.0,
+    "bath_thickness": 6.0
+  },
+  "md": { "dt": 2.0, "steps": 10000, "temperature": 300.0, "bath_damping": 100.0, "equilibration_steps": 1000, "skin": 0.5 },
+  "coupling": { "every": 100, "deliver_every": 5 },
+  "field": {
+    "mode": "laplace",
+    "applied_field": 4.0,
+    "ramp_steps": 3000,
+    "grid_spacing": 1.5,
+    "maxwell_stress": true,
+    "reuse_rmsd": 0.3,
+    "reuse_max_updates": 4
+  },
+  "emission": { "work_function": 4.5, "band_depth": 7.0, "radius": "geometric", "min_field": 3.0 },
+  "heat": {
+    "transport": "electronic",
+    "acceleration": 1.0,
+    "nottingham": true,
+    "joule": true,
+    "resistivity": { "model": "copper" },
+    "size_factor": 3.0,
+    "lorenz": 2.0e-8
+  },
+  "evaporation": { "remove_height": 15.0 },
+  "output": { "snapshot_every": 2500, "print_every": 1000, "final_xyz": true }
+}

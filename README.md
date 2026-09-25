@@ -15,7 +15,8 @@ is not in this repository.
 |---|---|---|
 | **spacemd** | molecular dynamics engine: crystals, liquids, ionic solids, metals, water; full energy and thermodynamic reports | [input format](docs/md-input.md) · [reports](docs/md-reports.md) · [examples](examples/md) |
 | **spaceemit** | thermal-field electron emission as an HTTP/JSON API: current density, Nottingham heat, energy spectra, barrier, transmission, I–V fitting | [API reference](docs/emission-api.md) · [OpenAPI](docs/openapi.yaml) · [client examples](examples/emission) |
-| **molviewer** | live 3-D view of a running simulation (Space3d, GPU-instanced), with an energy panel and thermostat control | [screenshots](assets) |
+| **spacetip** | the two combined: a metal nanotip under a strong field, heated by its own electron emission (MD + field solve + per-atom emission + heat) | [guide](docs/tip.md) · [examples](examples/md/tip.json) |
+| **molviewer** | live 3-D view of a running simulation (Space3d, GPU-instanced), with an energy panel and thermostat and field controls | [screenshots](assets) |
 
 ## Install
 
@@ -31,21 +32,23 @@ index = "sparse+https://spacecorps-registry.sliplane.app/index/"
 ```sh
 cargo add spacemd --registry spacecorps     # molecular dynamics engine
 cargo add spaceemit --registry spacecorps   # electron emission library
+cargo add spacetip --registry spacecorps    # emission-heated nanotip (MD + field + emission)
 ```
 
 **Command-line tools**, from source or prebuilt:
 
 ```sh
-cargo install spacemd-cli --registry spacecorps        # → spacemd
+cargo install spacemd-cli --registry spacecorps        # → spacemd (MD, tip, bench)
 cargo install spaceemit-server --registry spacecorps   # → spaceemit (HTTP API + CLI)
 ```
 
-Prebuilt binaries for macOS (`aarch64-apple-darwin`, `x86_64-apple-darwin`) and Linux (static:
-`x86_64-unknown-linux-musl`, `aarch64-unknown-linux-musl`):
+Prebuilt binaries for macOS (`aarch64-apple-darwin`, `x86_64-apple-darwin`), Linux (static:
+`x86_64-unknown-linux-musl`, `aarch64-unknown-linux-musl`) and Windows (`x86_64-pc-windows-gnu`,
+`.zip`, no extra DLLs):
 
 ```sh
-curl -fsSLO https://spacecorps-registry.sliplane.app/bin/spacemd/latest/spacemd-0.1.0-aarch64-apple-darwin.tar.gz
-tar xzf spacemd-0.1.0-aarch64-apple-darwin.tar.gz
+curl -fsSLO https://spacecorps-registry.sliplane.app/bin/spacemd/0.2.0/spacemd-0.2.0-aarch64-apple-darwin.tar.gz
+tar xzf spacemd-0.2.0-aarch64-apple-darwin.tar.gz
 curl -s https://spacecorps-registry.sliplane.app/bin/spacemd     # versions, files, sha256
 ```
 
@@ -113,13 +116,29 @@ spacemd run argon.json               # → thermo.csv, report.json, summary.md, 
 
 Sample output: [`examples/md/sample-output/summary.md`](examples/md/sample-output/summary.md).
 
-## Performance (Apple M4 Max, 16 threads)
+## Emission-heated nanotip in 30 seconds
 
-| workload | throughput |
-|---|---|
-| Lennard-Jones liquid (LAMMPS `in.lj` benchmark system), 32k / 256k / 1M atoms | 40 M / 67 M / 74 M atom-steps/s (up to 108 M with mixed precision) |
-| Electron emission, one point (exact transmission, J + Nottingham heat) | 14 µs |
-| Electron emission, 10⁶ points | 1.65 s |
+```sh
+spacemd example tip > tip.json   # 27k-atom Cu tip under 4 V/nm
+spacemd tip tip.json             # → current, fields, Nottingham/Joule power, tip temperatures over time
+```
+
+![Field-emitting Cu nanotip, coloured by local temperature](assets/molviewer-tip.png)
+
+A molecular-dynamics copper tip gets its surface field from an electrostatic solve. Its emission
+current and Nottingham heat come from spaceemit, atom by atom, and that heat flows back into the
+lattice. In the example the apex reaches about 12 V/nm, emits about 43 µA and heats to about
+460 K within a few picoseconds. The full guide is in [docs/tip.md](docs/tip.md).
+
+## Performance
+
+| workload | Apple M4 Max, 16 threads | AMD EPYC 7502P, 1 thread (x86_64 release binary) |
+|---|---|---|
+| Lennard-Jones liquid (LAMMPS `in.lj` system), 32k atoms | 40 M atom-steps/s | 3.9 M atom-steps/s |
+| Lennard-Jones liquid, 256k / 1M atoms | 67 M / 74 M atom-steps/s (up to 108 M with mixed precision) | – |
+| Electron emission, one point (exact transmission, J + Nottingham heat) | 14 µs | 29 µs |
+| Electron emission, 10⁶ points | 1.65 s | – |
+| Emission-heated Cu tip, 27k atoms, 20 ps | 13 s | – |
 
 ## Validation
 
@@ -134,6 +153,9 @@ Sample output: [`examples/md/sample-output/summary.md`](examples/md/sample-outpu
 | Emission: Murphy–Good, Richardson–Schottky, Nottingham inversion, planar limit | reproduced |
 | Emission: numerical convergence | ~10⁻⁶ relative |
 | Emission: spectra sum rules | ∫TED = ∫NED = ∫PED = J to ≤ 5 × 10⁻⁴ |
+| Emission: finite bands | reproduces the Fowler–Nordheim band-edge prefactor and the Stratton / Barranco Cárceles supply |
+| Tip: field of a hemisphere on a plane | enhancement 2.966 (exact 3) |
+| Tip: energy bookkeeping (heat in vs lattice energy) | 0.015 % |
 
 ## Support
 
@@ -141,7 +163,7 @@ Please report documentation issues and API questions in this repository's issue 
 
 ## License
 
-- **spacemd and spaceemit** (crates and binaries from the registry): [PolyForm Shield License
+- **spacemd, spaceemit and spacetip** (crates and binaries from the registry): [PolyForm Shield License
   1.0.0](https://polyformproject.org/licenses/shield/1.0.0/). You may use them for any purpose,
   commercial included: build on them, embed them, ship products with them. You may not use them to
   provide a product that competes with them or with SpaceCorps products built on them.

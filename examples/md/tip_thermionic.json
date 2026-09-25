@@ -1,0 +1,17 @@
+{
+  "title": "Hot tip with a low work function at a weak field: thermionic emission and Nottingham cooling",
+  "seed": 11,
+  "potential": { "builtin": "johnson_cu" },
+  "geometry": {
+    "box_xy": [60.0, 60.0],
+    "substrate_thickness": 20.0,
+    "tip_radius": 15.0,
+    "tip_height": 50.0
+  },
+  "md": { "dt": 2.0, "steps": 3000, "temperature": 1200.0, "bath_damping": 100.0, "equilibration_steps": 1000 },
+  "coupling": { "every": 50 },
+  "field": { "mode": "laplace", "applied_field": 1.0, "grid_spacing": 1.5 },
+  "emission": { "work_function": 3.0, "min_field": 0.5 },
+  "heat": { "transport": "electronic", "acceleration": 1.0 },
+  "output": { "print_every": 500 }
+}
