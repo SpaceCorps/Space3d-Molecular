@@ -9,6 +9,7 @@ Machine-readable spec: [`openapi.yaml`](openapi.yaml). Run the service yourself 
 see the [README](../README.md#install)): `spaceemit` serves on port 8741; `--host`, `--port` and
 `--threads` configure it, and `spaceemit compute …` does one calculation from the shell.
 
+- [Hosted instance](#hosted-instance)
 - [Conventions](#conventions)
 - [Endpoints](#endpoints): [`/health`](#get-health) · [`/v1/info`](#get-v1info) ·
   [`/v1/emission`](#post-v1emission) · [`/v1/spectra`](#post-v1spectra) ·
@@ -16,6 +17,23 @@ see the [README](../README.md#install)): `spaceemit` serves on port 8741; `--hos
   [`/v1/iv-fit`](#post-v1iv-fit)
 - [Errors](#errors)
 - [Physics models and references](#physics-models-and-references)
+
+## Hosted instance
+
+A public instance runs at **https://spaceemit-api.sliplane.app** — free, no key. It is sized for trying the API and
+moderate workloads, with these limits (see `GET /v1/info` → `limits`):
+
+| limit | value |
+|---|---|
+| points per `/v1/emission` request | 200 000 |
+| request body | 16 MiB |
+| spectrum / transmission / barrier points | 4 096 |
+| requests computing at once | 1 (up to 8 queued for ≤ 5 s) |
+| compute time per request | 20 s |
+| requests per client | 120 per minute |
+
+For heavy or production use, run your own `spaceemit` (same API, limits configurable, every core);
+see the [README](../README.md#install).
 
 ## Conventions
 
@@ -76,7 +94,7 @@ Batch current density and Nottingham heat. **Every numeric input is a number or 
 arrays must share one length and scalars are broadcast. Required: `field`, `workFunction`.
 
 ```sh
-curl -s localhost:8741/v1/emission -H 'content-type: application/json' -d '{
+curl -s https://spaceemit-api.sliplane.app/v1/emission -H 'content-type: application/json' -d '{
   "field": [3, 5, 8], "radius": 50, "workFunction": 4.5, "temperature": [300, 1000, 2000]
 }'
 ```
@@ -97,7 +115,7 @@ curl -s localhost:8741/v1/emission -H 'content-type: application/json' -d '{
 Semiconductor / finite band: add `effectiveMass` and `bandDepth`.
 
 ```sh
-curl -s localhost:8741/v1/emission -H 'content-type: application/json' \
+curl -s https://spaceemit-api.sliplane.app/v1/emission -H 'content-type: application/json' \
   -d '{"field": 5, "workFunction": 4.5, "effectiveMass": 0.3, "bandDepth": 1.5, "temperature": 800}'
 ```
 
@@ -120,7 +138,7 @@ samples per distribution (default 256). `sumRules` gives ∫distribution / J for
 (1 = exact).
 
 ```sh
-curl -s localhost:8741/v1/spectra -H 'content-type: application/json' \
+curl -s https://spaceemit-api.sliplane.app/v1/spectra -H 'content-type: application/json' \
   -d '{"field": 4, "radius": 20, "workFunction": 4.5, "temperature": 300, "points": 64}'
 ```
 
@@ -142,7 +160,7 @@ Barrier potential U(x) for `field`, `radius`, `gamma`, at the given `distance` v
 plus the barrier top.
 
 ```sh
-curl -s localhost:8741/v1/barrier -H 'content-type: application/json' \
+curl -s https://spaceemit-api.sliplane.app/v1/barrier -H 'content-type: application/json' \
   -d '{"field": 5, "radius": 20, "gamma": 10, "distance": [0.2, 0.5, 1, 2]}'
 ```
 
@@ -163,7 +181,7 @@ point. Give `energy` (number or array), or `points` (default 101) evenly spaced 
 m* ≠ 1.
 
 ```sh
-curl -s localhost:8741/v1/transmission -H 'content-type: application/json' \
+curl -s https://spaceemit-api.sliplane.app/v1/transmission -H 'content-type: application/json' \
   -d '{"field": 5, "radius": 20, "workFunction": 4.5, "energy": [-1, -0.5, 0, 0.5]}'
 ```
 
@@ -191,7 +209,7 @@ T [1, 5000] K); `initialBeta` (nm⁻¹, default from a Fowler–Nordheim plot); 
 (default 60); `options`.
 
 ```sh
-curl -s localhost:8741/v1/iv-fit -H 'content-type: application/json' -d '{
+curl -s https://spaceemit-api.sliplane.app/v1/iv-fit -H 'content-type: application/json' -d '{
   "voltage": [800, 900, 1000, 1100], "current": [1e-9, 2e-8, 2.2e-7, 1.5e-6],
   "workFunction": 4.5, "radius": 30, "fit": ["radius"], "bounds": {"radius": [5, 200]}
 }'
@@ -229,6 +247,9 @@ Request-level errors return a non-2xx status with
 | `fit_failed` | 422 | the I–V fit did not converge |
 | `payload_too_large` | 413 | request body too large |
 | `batch_too_large` | 413 | too many points in one request — split the batch |
+| `rate_limited` | 429 | too many requests from this client — wait `Retry-After` seconds |
+| `overloaded` | 503 | the server is busy — retry after `Retry-After` seconds |
+| `timeout` | 504 | the computation exceeded the time limit — send a smaller batch |
 | `not_found` | 404 | unknown endpoint |
 
 Codes are stable; messages are for humans and may change.

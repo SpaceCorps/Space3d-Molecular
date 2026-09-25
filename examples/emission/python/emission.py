@@ -1,13 +1,14 @@
 """spaceemit client example — standard library only (Python 3.9+).
 
-    SPACEEMIT_URL=http://localhost:8741 python3 emission.py
+    python3 emission.py                                  # public instance
+    SPACEEMIT_URL=http://localhost:8741 python3 emission.py  # your own spaceemit
 """
 import json
 import os
 import urllib.error
 import urllib.request
 
-URL = os.environ.get("SPACEEMIT_URL", "http://localhost:8741")
+URL = os.environ.get("SPACEEMIT_URL", "https://spaceemit-api.sliplane.app")
 
 
 def post(path, body):

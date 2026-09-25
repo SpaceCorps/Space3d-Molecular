@@ -55,8 +55,11 @@ x86_64 binaries need AVX2 (Intel Haswell / AMD Excavator, 2013 or newer). Replac
 
 ## Electron emission API in 30 seconds
 
+Try it against the public instance at **https://spaceemit-api.sliplane.app** (free, rate-limited; details in the
+[API reference](docs/emission-api.md#hosted-instance)):
+
 ```sh
-curl -s localhost:8741/v1/emission -H 'content-type: application/json' -d '{
+curl -s https://spaceemit-api.sliplane.app/v1/emission -H 'content-type: application/json' -d '{
   "field": [3, 5, 8], "radius": 50, "workFunction": 4.5, "temperature": [300, 1000, 2000]
 }'
 ```

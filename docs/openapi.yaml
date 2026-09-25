@@ -8,7 +8,10 @@ info:
     the vacuum level at the surface = 0 and the Fermi level at −W; spectrum and transmission
     energies are relative to E_F. See docs/emission-api.md.
 servers:
+  - url: https://spaceemit-api.sliplane.app
+    description: Public hosted instance (rate-limited)
   - url: http://localhost:8741
+    description: Self-hosted spaceemit
 paths:
   /health:
     get:
@@ -264,7 +267,7 @@ components:
           properties:
             code:
               type: string
-              enum: [invalid_json, invalid_request, invalid_parameter, no_barrier, length_mismatch, fit_failed, payload_too_large, batch_too_large, not_found]
+              enum: [invalid_json, invalid_request, invalid_parameter, no_barrier, length_mismatch, fit_failed, payload_too_large, batch_too_large, rate_limited, overloaded, timeout, not_found]
             message: { type: string }
   responses:
     Error:

@@ -1,6 +1,7 @@
 // spaceemit client example (TypeScript, Node 18+ / Deno / browsers — uses fetch).
-//   SPACEEMIT_URL=http://localhost:8741 node emission.ts      (Node 23.6+; or: npx tsx emission.ts)
-const URL = (globalThis as any).process?.env?.SPACEEMIT_URL ?? "http://localhost:8741";
+//   node emission.ts        (Node 23.6+; or: npx tsx emission.ts) — public instance by default;
+//   SPACEEMIT_URL=http://localhost:8741 node emission.ts   for your own spaceemit
+const URL = (globalThis as any).process?.env?.SPACEEMIT_URL ?? "https://spaceemit-api.sliplane.app";
 
 type NumOrArray = number | number[];
 

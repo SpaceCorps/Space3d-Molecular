@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# spaceemit API tour with curl. Set SPACEEMIT_URL to point at your service.
+# spaceemit API tour with curl, against the public instance (set SPACEEMIT_URL for your own).
 set -euo pipefail
-URL=${SPACEEMIT_URL:-http://localhost:8741}
+URL=${SPACEEMIT_URL:-https://spaceemit-api.sliplane.app}
 post() { curl -sS -X POST "$URL$1" -H 'content-type: application/json' -H 'accept-encoding: gzip' --compressed -d "$2"; echo; }
 
 echo "# health";   curl -sS "$URL/health"; echo

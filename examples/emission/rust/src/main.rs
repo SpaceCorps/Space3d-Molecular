@@ -1,7 +1,8 @@
 //! Calling the spaceemit electron-emission API from Rust.
 //!
 //! ```text
-//! SPACEEMIT_URL=http://localhost:8741 cargo run
+//! cargo run                                        # public instance
+//! SPACEEMIT_URL=http://localhost:8741 cargo run    # your own spaceemit
 //! ```
 
 use serde::{Deserialize, Serialize};
@@ -42,7 +43,7 @@ struct PointError {
 }
 
 fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let url = std::env::var("SPACEEMIT_URL").unwrap_or_else(|_| "http://localhost:8741".into());
+    let url = std::env::var("SPACEEMIT_URL").unwrap_or_else(|_| "https://spaceemit-api.sliplane.app".into());
 
     let request = EmissionRequest {
         field: vec![3.0, 5.0, 8.0],
