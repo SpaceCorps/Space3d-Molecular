@@ -3,8 +3,8 @@ MIT License
 Copyright (c) 2026 SpaceCorps
 
 This license covers the contents of this repository only (documentation, API specification and
-examples). It grants no rights to the spacemd, spaceemit or molviewer software itself, which is
-proprietary to SpaceCorps and is not part of this repository.
+examples). The spacemd and spaceemit software is licensed separately under the PolyForm Shield
+License 1.0.0 (see README); molviewer and the Space3d engine are proprietary.
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal

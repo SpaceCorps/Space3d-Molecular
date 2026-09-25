@@ -1,7 +1,9 @@
 # spacemd — simulation input reference
 
 A simulation is one JSON file: the system, the force field, a list of stages (minimize / run
-dynamics) and what to write out.
+dynamics) and what to write out. Get the `spacemd` command with
+`cargo install spacemd-cli --registry spacecorps` or a prebuilt binary (see the
+[README](../README.md#install)); use the `spacemd` crate to drive simulations from Rust.
 
 ```sh
 spacemd example list            # built-in examples

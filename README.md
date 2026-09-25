@@ -6,15 +6,52 @@ and how electrons leave hot, field-loaded surfaces, computed fast and watched li
 
 ![Copper crystal in the live viewer](assets/molviewer-cu.png)
 
-This repository holds the **public interface**: API reference, input formats, report formats
-and runnable client examples. The engines themselves are proprietary SpaceCorps software and are
-not included here.
+This repository holds the **public interface**: install instructions, API reference, input
+formats, report formats and runnable client examples. The engines are distributed as Rust crates
+and prebuilt binaries from the SpaceCorps package registry (see [Install](#install)); their source
+is not in this repository.
 
 | component | what it does | docs |
 |---|---|---|
 | **spacemd** | molecular dynamics engine: crystals, liquids, ionic solids, metals, water; full energy and thermodynamic reports | [input format](docs/md-input.md) · [reports](docs/md-reports.md) · [examples](examples/md) |
 | **spaceemit** | thermal-field electron emission as an HTTP/JSON API: current density, Nottingham heat, energy spectra, barrier, transmission, I–V fitting | [API reference](docs/emission-api.md) · [OpenAPI](docs/openapi.yaml) · [client examples](examples/emission) |
 | **molviewer** | live 3-D view of a running simulation (Space3d, GPU-instanced), with an energy panel and thermostat control | [screenshots](assets) |
+
+## Install
+
+Registry: <https://spacecorps-registry.sliplane.app>. No account or token is needed.
+
+**Rust libraries.** Add the registry to `~/.cargo/config.toml` once:
+
+```toml
+[registries.spacecorps]
+index = "sparse+https://spacecorps-registry.sliplane.app/index/"
+```
+
+```sh
+cargo add spacemd --registry spacecorps     # molecular dynamics engine
+cargo add spaceemit --registry spacecorps   # electron emission library
+```
+
+**Command-line tools**, from source or prebuilt:
+
+```sh
+cargo install spacemd-cli --registry spacecorps        # → spacemd
+cargo install spaceemit-server --registry spacecorps   # → spaceemit (HTTP API + CLI)
+```
+
+Prebuilt binaries for macOS (`aarch64-apple-darwin`, `x86_64-apple-darwin`) and Linux (static:
+`x86_64-unknown-linux-musl`, `aarch64-unknown-linux-musl`):
+
+```sh
+curl -fsSLO https://spacecorps-registry.sliplane.app/bin/spacemd/latest/spacemd-0.1.0-aarch64-apple-darwin.tar.gz
+tar xzf spacemd-0.1.0-aarch64-apple-darwin.tar.gz
+curl -s https://spacecorps-registry.sliplane.app/bin/spacemd     # versions, files, sha256
+```
+
+x86_64 binaries need AVX2 (Intel Haswell / AMD Excavator, 2013 or newer). Replace `spacemd` with
+`spaceemit` for the emission service. Start the API with `spaceemit` (port 8741) or
+`spaceemit --port 9000 --threads 8`.
 
 ## Electron emission API in 30 seconds
 
@@ -95,13 +132,15 @@ Sample output: [`examples/md/sample-output/summary.md`](examples/md/sample-outpu
 | Emission: numerical convergence | ~10⁻⁶ relative |
 | Emission: spectra sum rules | ∫TED = ∫NED = ∫PED = J to ≤ 5 × 10⁻⁴ |
 
-## Access
+## Support
 
-The engines are proprietary. For licensing, access to the emission API or builds of spacemd and
-molviewer, contact [SpaceCorps](https://github.com/SpaceCorps). Please report documentation
-issues and API questions in this repository's issue tracker.
+Please report documentation issues and API questions in this repository's issue tracker.
 
 ## License
 
-Documentation and examples in this repository: MIT (see [LICENSE](LICENSE)). The spacemd,
-spaceemit and molviewer software is proprietary to SpaceCorps and not covered by that license.
+- **spacemd and spaceemit** (crates and binaries from the registry): [PolyForm Shield License
+  1.0.0](https://polyformproject.org/licenses/shield/1.0.0/). You may use them for any purpose,
+  commercial included: build on them, embed them, ship products with them. You may not use them to
+  provide a product that competes with them or with SpaceCorps products built on them.
+- **Documentation and examples in this repository:** MIT (see [LICENSE](LICENSE)).
+- **molviewer** and the Space3d engine are proprietary and not distributed.

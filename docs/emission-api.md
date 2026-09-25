@@ -4,7 +4,10 @@
 current density, Nottingham heat, energy spectra, barrier profiles, transmission probabilities,
 and fits to measured I–V curves. It is served as an HTTP/JSON API (default port **8741**).
 
-Machine-readable spec: [`openapi.yaml`](openapi.yaml).
+Machine-readable spec: [`openapi.yaml`](openapi.yaml). Run the service yourself with the
+`spaceemit` binary (`cargo install spaceemit-server --registry spacecorps`, or a prebuilt binary —
+see the [README](../README.md#install)): `spaceemit` serves on port 8741; `--host`, `--port` and
+`--threads` configure it, and `spaceemit compute …` does one calculation from the shell.
 
 - [Conventions](#conventions)
 - [Endpoints](#endpoints): [`/health`](#get-health) · [`/v1/info`](#get-v1info) ·
